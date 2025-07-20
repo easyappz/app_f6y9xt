@@ -1,41 +1,26 @@
-.vk-layout {
+.layout {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  background-color: #e7f0fe;
+  height: 100vh;
+  background-color: #edeef0;
 }
 
-.vk-container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 15px;
-  box-sizing: border-box;
-}
-
-.vk-header {
-  background-color: #5181b8;
-  color: white;
-  padding: 10px 0;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.vk-logo {
-  font-size: 24px;
-  font-weight: bold;
-  margin: 0;
-}
-
-.vk-main {
+.layout-content {
+  display: flex;
   flex: 1;
-  padding: 20px 0;
+  padding: 0 15px;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
 }
 
-.vk-footer {
-  background-color: #fff;
-  border-top: 1px solid #d3d9de;
-  padding: 15px 0;
-  text-align: center;
-  font-size: 14px;
-  color: #656565;
+.layout-main {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+}
+@media (max-width: 768px) {
+  .layout-content {
+    flex-direction: column;
+  }
 }

@@ -1,152 +1,174 @@
 const express = require('express');
 const router = express.Router();
 const Post = require('../models/Post');
-const { protect } = require('../middleware/auth');
 
-// Route: Create a new post
-router.post('/', protect, async (req, res) => {
+// Get all posts
+router.get('/', async (req, res) => {
   try {
-    const { text, images } = req.body;
+    const posts = await Post.find().sort({ createdAt: -1 });
+    const formattedPosts = posts.map(post => ({
+      id: post._id,
+      authorId: post.authorId,
+      authorName: post.authorName,
+      authorAvatar: post.authorAvatar,
+      content: post.content,
+      image: post.image || '',
+      likesCount: post.likes.length,
+      commentsCount: post.comments.length,
+      repostsCount: post.reposts.length,
+      liked: false,
+      comments: post.comments.map(comment => ({
+        id: comment._id,
+        authorId: comment.authorId,
+        authorName: comment.authorName,
+        authorAvatar: comment.authorAvatar || '',
+        text: comment.text,
+        createdAt: formatDate(comment.createdAt)
+      })),
+      createdAt: formatDate(post.createdAt)
+    }));
+    res.json(formattedPosts);
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
-    if (!text) {
-      return res.status(400).json({ message: 'Text is required for the post' });
-    }
+// Create a new post
+router.post('/', async (req, res) => {
+  try {
+    const { content } = req.body;
+    // Mock user data (in real app this would come from auth)
+    const authorId = 'mockUserId';
+    const authorName = 'Тестовый Пользователь';
+    const authorAvatar = '';
 
-    const post = new Post({
-      text,
-      images: images || [],
-      author: req.user._id,
+    const newPost = new Post({
+      authorId,
+      authorName,
+      authorAvatar,
+      content
     });
 
-    const createdPost = await post.save();
-    return res.status(201).json(createdPost);
+    const savedPost = await newPost.save();
+    res.status(201).json({
+      id: savedPost._id,
+      authorId: savedPost.authorId,
+      authorName: savedPost.authorName,
+      authorAvatar: savedPost.authorAvatar,
+      content: savedPost.content,
+      image: savedPost.image || '',
+      likesCount: savedPost.likes.length,
+      commentsCount: savedPost.comments.length,
+      repostsCount: savedPost.reposts.length,
+      liked: false,
+      comments: [],
+      createdAt: formatDate(savedPost.createdAt)
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error' });
+    console.error('Error creating post:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// Route: Get all posts
-router.get('/', protect, async (req, res) => {
+// Like a post
+router.post('/:postId/like', async (req, res) => {
   try {
-    const posts = await Post.find().populate('author', 'name avatar').populate('comments.author', 'name avatar');
-    return res.json(posts);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error' });
-  }
-});
+    const { postId } = req.params;
+    // Mock user id (in real app this would come from auth)
+    const userId = 'mockUserId';
 
-// Route: Get single post by ID
-router.get('/:id', protect, async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id).populate('author', 'name avatar').populate('comments.author', 'name avatar');
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
 
-    if (post) {
-      return res.json(post);
+    const userIndex = post.likes.indexOf(userId);
+    if (userIndex === -1) {
+      post.likes.push(userId);
     } else {
-      return res.status(404).json({ message: 'Post not found' });
-    }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Route: Delete a post
-router.delete('/:id', protect, async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-
-    if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      post.likes.splice(userIndex, 1);
     }
 
-    if (post.author.toString() !== req.user._id.toString()) {
-      return res.status(401).json({ message: 'User not authorized' });
-    }
-
-    await post.remove();
-    return res.json({ message: 'Post removed' });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Route: Like a post
-router.post('/:id/like', protect, async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-
-    if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
-
-    if (post.likes.includes(req.user._id)) {
-      return res.status(400).json({ message: 'Post already liked' });
-    }
-
-    post.likes.push(req.user._id);
     await post.save();
-
-    return res.json({ message: 'Post liked' });
+    res.json({ likesCount: post.likes.length });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error' });
+    console.error('Error liking post:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// Route: Unlike a post
-router.delete('/:id/like', protect, async (req, res) => {
+// Comment on a post
+router.post('/:postId/comment', async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id);
-
-    if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
-
-    if (!post.likes.includes(req.user._id)) {
-      return res.status(400).json({ message: 'Post not liked yet' });
-    }
-
-    post.likes = post.likes.filter(userId => userId.toString() !== req.user._id.toString());
-    await post.save();
-
-    return res.json({ message: 'Post unliked' });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Route: Comment on a post
-router.post('/:id/comment', protect, async (req, res) => {
-  try {
+    const { postId } = req.params;
     const { text } = req.body;
-    const post = await Post.findById(req.params.id);
+    // Mock user data (in real app this would come from auth)
+    const authorId = 'mockUserId';
+    const authorName = 'Тестовый Пользователь';
+    const authorAvatar = '';
 
+    const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
-    }
-
-    if (!text) {
-      return res.status(400).json({ message: 'Comment text is required' });
     }
 
     const newComment = {
-      text,
-      author: req.user._id,
+      authorId,
+      authorName,
+      authorAvatar,
+      text
     };
 
     post.comments.push(newComment);
     await post.save();
 
-    return res.json(post);
+    const savedComment = post.comments[post.comments.length - 1];
+    res.status(201).json({
+      id: savedComment._id,
+      authorId: savedComment.authorId,
+      authorName: savedComment.authorName,
+      authorAvatar: savedComment.authorAvatar,
+      text: savedComment.text,
+      createdAt: formatDate(savedComment.createdAt)
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error' });
+    console.error('Error commenting on post:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+// Repost a post
+router.post('/:postId/repost', async (req, res) => {
+  try {
+    const { postId } = req.params;
+    // Mock user id (in real app this would come from auth)
+    const userId = 'mockUserId';
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    const userIndex = post.reposts.indexOf(userId);
+    if (userIndex === -1) {
+      post.reposts.push(userId);
+    } else {
+      post.reposts.splice(userIndex, 1);
+    }
+
+    await post.save();
+    res.json({ repostsCount: post.reposts.length });
+  } catch (error) {
+    console.error('Error reposting:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Helper function to format date
+function formatDate(date) {
+  const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+  return new Date(date).toLocaleDateString('ru-RU', options);
+}
 
 module.exports = router;

@@ -1,0 +1,86 @@
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.post-header-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.post-author-name {
+  font-weight: bold;
+  color: #2a2a2a;
+}
+
+.post-date {
+  font-size: 12px;
+  color: #939393;
+}
+
+.post-content {
+  margin-bottom: 15px;
+  color: #2a2a2a;
+  line-height: 1.5;
+}
+
+.post-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.post-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  border-top: 1px solid #e5e5e5;
+  padding-top: 10px;
+}
+
+.post-comments {
+  margin-top: 15px;
+  border-top: 1px solid #e5e5e5;
+  padding-top: 15px;
+}
+
+.post-comment {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.post-comment-content {
+  flex: 1;
+  background-color: #f5f5f5;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.post-comment-author {
+  font-weight: bold;
+  color: #2a2a2a;
+  margin-bottom: 3px;
+}
+
+.post-comment-text {
+  color: #2a2a2a;
+  font-size: 14px;
+}
+
+.post-no-comments {
+  color: #939393;
+  font-size: 14px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.post-comment-form {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}

@@ -1,0 +1,45 @@
+.header {
+  background-color: #5181b8;
+  color: white;
+  padding: 0 15px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.header-logo {
+  font-size: 18px;
+  font-weight: bold;
+  text-decoration: none;
+  color: white;
+  margin-right: 20px;
+}
+
+.header-search {
+  flex: 1;
+  max-width: 400px;
+  margin-right: 20px;
+}
+
+.header-nav {
+  display: flex;
+  gap: 15px;
+}
+
+.header-nav-item {
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.header-nav-item:hover {
+  text-decoration: underline;
+}

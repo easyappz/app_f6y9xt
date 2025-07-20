@@ -1,13 +1,18 @@
 .btn {
+  cursor: pointer;
   border: none;
   border-radius: 4px;
-  cursor: pointer;
   font-weight: 500;
   transition: background-color 0.2s, color 0.2s;
-  padding: 0 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+}
+
+.btn-default {
+  background-color: #f0f2f5;
+  color: #2a2a2a;
 }
 
 .btn-primary {
@@ -15,37 +20,39 @@
   color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background-color: #4672a4;
-}
-
 .btn-secondary {
-  background-color: transparent;
+  background-color: #e5e5e5;
+  color: #2a2a2a;
+}
+
+.btn-danger {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.btn-text {
+  background: none;
   color: #5181b8;
-  border: 1px solid #5181b8;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background-color: rgba(81, 129, 184, 0.1);
-}
-
-.btn-medium {
-  height: 34px;
-  font-size: 14px;
+  padding: 0;
 }
 
 .btn-small {
-  height: 30px;
+  padding: 6px 12px;
   font-size: 13px;
 }
 
+.btn-medium {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
 .btn-large {
-  height: 40px;
+  padding: 10px 20px;
   font-size: 16px;
 }
 
-.btn-fullwidth {
-  width: 100%;
+.btn:hover:not(:disabled) {
+  opacity: 0.9;
 }
 
 .btn:disabled {

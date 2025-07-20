@@ -1,69 +1,86 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { generateToken } = require('../middleware/auth');
 
-// Route: Register a new user
+// Secret key for JWT (in production, store this in environment variables)
+const JWT_SECRET = 'mysecretkey123';
+
+// Register a new user
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { email, password, firstName, lastName } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Please provide all required fields' });
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already registered' });
     }
 
-    const userExists = await User.findOne({ email });
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    const user = await User.create({
-      name,
+    // Create new user
+    const newUser = new User({
       email,
-      password,
+      password: hashedPassword,
+      firstName,
+      lastName
     });
 
-    if (user) {
-      return res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        token: generateToken(user._id),
-      });
-    } else {
-      return res.status(400).json({ message: 'Invalid user data' });
-    }
+    const savedUser = await newUser.save();
+
+    // Generate JWT token
+    const token = jwt.sign({ userId: savedUser._id }, JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(201).json({
+      user: {
+        id: savedUser._id,
+        email: savedUser.email,
+        firstName: savedUser.firstName,
+        lastName: savedUser.lastName
+      },
+      token
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error' });
+    console.error('Error during registration:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// Route: Authenticate user & get token
+// Login user
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Please provide email and password' });
-    }
-
+    // Find user by email
     const user = await User.findOne({ email });
-
-    if (user && (await user.comparePassword(password))) {
-      return res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        token: generateToken(user._id),
-      });
-    } else {
-      return res.status(401).json({ message: 'Invalid email or password' });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
     }
+
+    // Compare passwords
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
+
+    res.json({
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      },
+      token
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error' });
+    console.error('Error during login:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
