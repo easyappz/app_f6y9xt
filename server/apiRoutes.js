@@ -1,31 +1,16 @@
 const express = require('express');
-
-/**
- * Пример создания модели в базу данных
- */
-// const mongoose = require('mongoose');
-// const db = require('/db');
-
-// const MongoTestSchema = new mongoose.Schema({
-//   value: { type: String, required: true },
-// });
-
-// const MongoModelTest = db.mongoDb.model('Test', MongoTestSchema);
-
-// const newTest = new MongoModelTest({
-//   value: 'test-value',
-// });
-
-// newTest.save();
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
+const postRoutes = require('./routes/post');
+const messageRoutes = require('./routes/message');
 
 const router = express.Router();
 
-// GET /api/hello
+// Basic API endpoints
 router.get('/hello', (req, res) => {
   res.json({ message: 'Hello from API!' });
 });
 
-// GET /api/status
 router.get('/status', (req, res) => {
   res.json({ 
     status: 'ok',
@@ -33,5 +18,10 @@ router.get('/status', (req, res) => {
   });
 });
 
-module.exports = router;
+// Route grouping
+router.use('/auth', authRoutes);
+router.use('/user', userRoutes);
+router.use('/post', postRoutes);
+router.use('/message', messageRoutes);
 
+module.exports = router;
