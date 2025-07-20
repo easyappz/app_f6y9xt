@@ -1,0 +1,11 @@
+.vk-link {
+  color: #2a5885;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.vk-link:hover {
+  color: #1d3a5f;
+  text-decoration: underline;
+}

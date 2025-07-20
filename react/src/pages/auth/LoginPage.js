@@ -1,57 +1,80 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
+import Link from '../../components/ui/Link';
 import { instance } from '../../api/axios';
+import './AuthPage.css';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!email) {
+      newErrors.email = 'Введите email';
+    }
+    if (!password) {
+      newErrors.password = 'Введите пароль';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    if (!validateForm()) return;
+
+    setLoading(true);
     try {
       const response = await instance.post('/api/auth/login', { email, password });
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         navigate('/feed');
       }
-    } catch (err) {
-      setError('Ошибка входа. Проверьте email или пароль.');
+    } catch (error) {
+      setErrors({ general: error.response?.data?.message || 'Произошла ошибка при входе' });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container" style={{ display: 'flex', justifyContent: 'center', marginTop: '100px' }}>
-      <Card style={{ width: '400px', textAlign: 'center' }}>
-        <h2>Вход</h2>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="auth-page">
+      <Card>
+        <h1 className="auth-page__title">Вход</h1>
         <form onSubmit={handleSubmit}>
           <Input
+            label="Email"
             type="email"
-            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder="Введите email"
+            error={errors.email}
             required
           />
           <Input
+            label="Пароль"
             type="password"
-            placeholder="Пароль"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder="Введите пароль"
+            error={errors.password}
             required
           />
-          <Button variant="primary" style={{ width: '100%' }}>
-            Войти
+          {errors.general && <div className="auth-page__error">{errors.general}</div>}
+          <Button variant="primary" type="submit" disabled={loading} fullWidth>
+            {loading ? 'Вход...' : 'Войти'}
           </Button>
         </form>
-        <p style={{ marginTop: '15px' }}>
-          Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
-        </p>
+        <div className="auth-page__footer">
+          <Link href="/register">Зарегистрироваться</Link>
+        </div>
       </Card>
     </div>
   );

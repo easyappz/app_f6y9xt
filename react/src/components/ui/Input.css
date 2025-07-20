@@ -1,0 +1,38 @@
+.vk-input-container {
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.vk-input-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: #2a5885;
+  font-weight: 500;
+}
+
+.vk-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d3d9de;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.vk-input:focus {
+  border-color: #5181b8;
+}
+
+.vk-input--error {
+  border-color: #ed0f34;
+}
+
+.vk-input-error-text {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #ed0f34;
+}

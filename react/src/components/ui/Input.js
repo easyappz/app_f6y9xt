@@ -1,15 +1,20 @@
 import React from 'react';
+import './Input.css';
 
-const Input = ({ type = 'text', placeholder, value, onChange, name, required = false }) => {
+const Input = ({ label, type = 'text', value, onChange, placeholder, error, required = false }) => {
   return (
-    <input
-      type={type}
-      placeholder={placeholder}
-      value={value}
-      onChange={onChange}
-      name={name}
-      required={required}
-    />
+    <div className="vk-input-container">
+      {label && <label className="vk-input-label">{label}</label>}
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`vk-input ${error ? 'vk-input--error' : ''}`}
+        required={required}
+      />
+      {error && <span className="vk-input-error-text">{error}</span>}
+    </div>
   );
 };
 
