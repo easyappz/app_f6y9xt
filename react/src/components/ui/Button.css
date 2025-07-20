@@ -1,37 +1,54 @@
-.vk-button {
-  padding: 10px 20px;
+.btn {
   border: none;
   border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  outline: none;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.vk-button--primary {
+.btn-primary {
   background-color: #5181b8;
   color: white;
 }
 
-.vk-button--primary:hover:not(:disabled) {
-  background-color: #4675a8;
+.btn-primary:hover:not(:disabled) {
+  background-color: #4672a4;
 }
 
-.vk-button--secondary {
-  background-color: #e5ebf1;
-  color: #2c2d2e;
+.btn-secondary {
+  background-color: transparent;
+  color: #5181b8;
+  border: 1px solid #5181b8;
 }
 
-.vk-button--secondary:hover:not(:disabled) {
-  background-color: #d8dfe8;
+.btn-secondary:hover:not(:disabled) {
+  background-color: rgba(81, 129, 184, 0.1);
 }
 
-.vk-button:disabled {
+.btn-medium {
+  height: 34px;
+  font-size: 14px;
+}
+
+.btn-small {
+  height: 30px;
+  font-size: 13px;
+}
+
+.btn-large {
+  height: 40px;
+  font-size: 16px;
+}
+
+.btn-fullwidth {
+  width: 100%;
+}
+
+.btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.vk-button--full-width {
-  width: 100%;
 }

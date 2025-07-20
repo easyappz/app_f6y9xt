@@ -1,0 +1,32 @@
+.textarea-field {
+  margin-bottom: 15px;
+}
+
+.textarea-field-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: #2a5885;
+  font-weight: 500;
+}
+
+.textarea-field-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d3d9de;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+  resize: vertical;
+}
+
+.textarea-field-input:focus {
+  border-color: #5181b8;
+  outline: none;
+}
+
+.textarea-field-input:disabled {
+  background-color: #f2f4f5;
+  cursor: not-allowed;
+}
