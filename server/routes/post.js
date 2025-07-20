@@ -1,107 +1,151 @@
 const express = require('express');
-const Post = require('../models/Post');
-const { verifyToken } = require('../middleware/auth');
-
 const router = express.Router();
+const Post = require('../models/Post');
+const { protect } = require('../middleware/auth');
 
-// POST /api/post/create - Create a new post
-router.post('/create', verifyToken, async (req, res) => {
+// Route: Create a new post
+router.post('/', protect, async (req, res) => {
   try {
-    const { content, images } = req.body;
-    if (!content) {
-      return res.status(400).json({ message: 'Content is required' });
+    const { text, images } = req.body;
+
+    if (!text) {
+      return res.status(400).json({ message: 'Text is required for the post' });
     }
 
     const post = new Post({
-      author: req.user.id,
-      content,
-      images: images || []
+      text,
+      images: images || [],
+      author: req.user._id,
     });
-    await post.save();
 
-    const populatedPost = await Post.findById(post._id).populate('author', '-password');
-    res.status(201).json({ message: 'Post created successfully', post: populatedPost });
+    const createdPost = await post.save();
+    return res.status(201).json(createdPost);
   } catch (error) {
-    console.error('Post creation error:', error);
-    res.status(500).json({ message: 'Failed to create post' });
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
-// GET /api/post/feed - Get feed of posts
-router.get('/feed', verifyToken, async (req, res) => {
+// Route: Get all posts
+router.get('/', protect, async (req, res) => {
   try {
-    const posts = await Post.find()
-      .sort({ createdAt: -1 })
-      .populate('author', '-password')
-      .populate('comments.user', '-password');
-    res.json({ posts });
+    const posts = await Post.find().populate('author', 'name avatar').populate('comments.author', 'name avatar');
+    return res.json(posts);
   } catch (error) {
-    console.error('Feed fetch error:', error);
-    res.status(500).json({ message: 'Failed to fetch feed' });
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
-// GET /api/post/:id - Get post by ID
-router.get('/:id', verifyToken, async (req, res) => {
+// Route: Get single post by ID
+router.get('/:id', protect, async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id)
-      .populate('author', '-password')
-      .populate('comments.user', '-password');
-    if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
-    res.json({ post });
-  } catch (error) {
-    console.error('Post fetch error:', error);
-    res.status(500).json({ message: 'Failed to fetch post' });
-  }
-});
+    const post = await Post.findById(req.params.id).populate('author', 'name avatar').populate('comments.author', 'name avatar');
 
-// POST /api/post/:id/like - Like a post
-router.post('/:id/like', verifyToken, async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
-
-    if (post.likes.includes(req.user.id)) {
-      post.likes = post.likes.filter(userId => userId.toString() !== req.user.id.toString());
+    if (post) {
+      return res.json(post);
     } else {
-      post.likes.push(req.user.id);
+      return res.status(404).json({ message: 'Post not found' });
     }
-    await post.save();
-
-    res.json({ message: 'Like updated', post });
   } catch (error) {
-    console.error('Like error:', error);
-    res.status(500).json({ message: 'Failed to update like' });
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
-// POST /api/post/:id/comment - Comment on a post
-router.post('/:id/comment', verifyToken, async (req, res) => {
+// Route: Delete a post
+router.delete('/:id', protect, async (req, res) => {
   try {
-    const { content } = req.body;
-    if (!content) {
-      return res.status(400).json({ message: 'Comment content is required' });
-    }
-
     const post = await Post.findById(req.params.id);
+
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    post.comments.push({ user: req.user.id, content });
+    if (post.author.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'User not authorized' });
+    }
+
+    await post.remove();
+    return res.json({ message: 'Post removed' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Route: Like a post
+router.post('/:id/like', protect, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    if (post.likes.includes(req.user._id)) {
+      return res.status(400).json({ message: 'Post already liked' });
+    }
+
+    post.likes.push(req.user._id);
     await post.save();
 
-    const updatedPost = await Post.findById(req.params.id)
-      .populate('author', '-password')
-      .populate('comments.user', '-password');
-    res.json({ message: 'Comment added', post: updatedPost });
+    return res.json({ message: 'Post liked' });
   } catch (error) {
-    console.error('Comment error:', error);
-    res.status(500).json({ message: 'Failed to add comment' });
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Route: Unlike a post
+router.delete('/:id/like', protect, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    if (!post.likes.includes(req.user._id)) {
+      return res.status(400).json({ message: 'Post not liked yet' });
+    }
+
+    post.likes = post.likes.filter(userId => userId.toString() !== req.user._id.toString());
+    await post.save();
+
+    return res.json({ message: 'Post unliked' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Route: Comment on a post
+router.post('/:id/comment', protect, async (req, res) => {
+  try {
+    const { text } = req.body;
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    if (!text) {
+      return res.status(400).json({ message: 'Comment text is required' });
+    }
+
+    const newComment = {
+      text,
+      author: req.user._id,
+    };
+
+    post.comments.push(newComment);
+    await post.save();
+
+    return res.json(post);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 

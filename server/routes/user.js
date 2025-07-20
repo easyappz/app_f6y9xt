@@ -1,53 +1,88 @@
 const express = require('express');
-const User = require('../models/User');
-const { verifyToken } = require('../middleware/auth');
-
 const router = express.Router();
+const User = require('../models/User');
+const { protect } = require('../middleware/auth');
 
-// GET /api/user/profile - Get user profile
-router.get('/profile', verifyToken, async (req, res) => {
+// Route: Get user profile
+router.get('/profile', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json({ user });
+    return res.json(req.user);
   } catch (error) {
-    console.error('Profile fetch error:', error);
-    res.status(500).json({ message: 'Failed to fetch profile' });
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
-// PUT /api/user/profile - Update user profile
-router.put('/profile', verifyToken, async (req, res) => {
+// Route: Update user profile
+router.put('/profile', protect, async (req, res) => {
   try {
-    const { fullName, bio, profilePicture } = req.body;
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { fullName, bio, profilePicture, updatedAt: Date.now() },
-      { new: true, select: '-password' }
-    );
-    if (!user) {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      user.name = req.body.name || user.name;
+      user.email = req.body.email || user.email;
+      user.avatar = req.body.avatar || user.avatar;
+      user.bio = req.body.bio || user.bio;
+
+      const updatedUser = await user.save();
+
+      return res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        avatar: updatedUser.avatar,
+        bio: updatedUser.bio,
+      });
+    } else {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json({ message: 'Profile updated successfully', user });
   } catch (error) {
-    console.error('Profile update error:', error);
-    res.status(500).json({ message: 'Failed to update profile' });
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
-// GET /api/user/:id - Get user by ID
-router.get('/:id', verifyToken, async (req, res) => {
+// Route: Add friend
+router.post('/friends/:id', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    const friend = await User.findById(req.params.id);
+    const user = await User.findById(req.user._id);
+
+    if (!friend) {
+      return res.status(404).json({ message: 'Friend not found' });
     }
-    res.json({ user });
+
+    if (user.friends.includes(friend._id)) {
+      return res.status(400).json({ message: 'User is already a friend' });
+    }
+
+    user.friends.push(friend._id);
+    await user.save();
+
+    return res.json({ message: 'Friend added successfully' });
   } catch (error) {
-    console.error('User fetch error:', error);
-    res.status(500).json({ message: 'Failed to fetch user' });
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Route: Remove friend
+router.delete('/friends/:id', protect, async (req, res) => {
+  try {
+    const friendId = req.params.id;
+    const user = await User.findById(req.user._id);
+
+    if (!user.friends.includes(friendId)) {
+      return res.status(400).json({ message: 'User is not in friends list' });
+    }
+
+    user.friends = user.friends.filter(id => id.toString() !== friendId);
+    await user.save();
+
+    return res.json({ message: 'Friend removed successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
